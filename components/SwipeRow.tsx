@@ -1,11 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
-import { Pencil, Trash2 } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Pencil, Trash2, Undo2 } from 'lucide-react';
 
 const OPEN_PX = 128;
 const FULL_SWIPE_RATIO = 0.55; // of row width -> delete
+const UNDO_MS = 5000;
 
 // Module-level registry so only one row is ever open at a time.
 let activeClose: (() => void) | null = null;
@@ -25,11 +26,14 @@ export function SwipeRow({
 }) {
   const [offset, setOffset] = useState(0);
   const [dragging, setDragging] = useState(false);
-  const [deleted, setDeleted] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState(false);
+  const [gone, setGone] = useState(false);
   const drag = useRef<DragState | null>(null);
   const moved = useRef(false);
   const rootRef = useRef<HTMLDivElement>(null);
-  const [, startTransition] = useTransition();
+  const timerRef = useRef<number | null>(null);
+  const pendingRef = useRef(false);
+  const sentRef = useRef(false);
 
   const close = useCallback(() => {
     setOffset(0);
@@ -49,14 +53,37 @@ export function SwipeRow({
     return () => window.removeEventListener('scroll', onScroll, { capture: true });
   }, [offset === 0, close]);
 
+  const commitDelete = useCallback(() => {
+    if (sentRef.current || !pendingRef.current) return;
+    sentRef.current = true;
+    void deleteAction();
+  }, [deleteAction]);
+
+  // If the component unmounts (navigation) while an undo window is open,
+  // commit the delete immediately — nothing silently comes back later.
+  useEffect(
+    () => () => {
+      if (timerRef.current) window.clearTimeout(timerRef.current);
+      commitDelete();
+    },
+    [commitDelete],
+  );
+
   function requestDelete() {
-    if (window.confirm(`Delete “${name}”? This cannot be undone.`)) {
-      setDeleted(true); // optimistic
-      if (activeClose === close) activeClose = null;
-      startTransition(() => deleteAction());
-    } else {
-      close();
-    }
+    if (activeClose === close) activeClose = null;
+    pendingRef.current = true;
+    setPendingDelete(true);
+    timerRef.current = window.setTimeout(() => {
+      commitDelete();
+      setGone(true);
+    }, UNDO_MS);
+  }
+
+  function undoDelete() {
+    if (timerRef.current) window.clearTimeout(timerRef.current);
+    pendingRef.current = false;
+    setPendingDelete(false);
+    setOffset(0);
   }
 
   function onPointerDown(e: React.PointerEvent) {
@@ -93,9 +120,8 @@ export function SwipeRow({
     const width = rootRef.current?.clientWidth ?? 400;
     setOffset((o) => {
       if (o < -width * FULL_SWIPE_RATIO) {
-        // full swipe across the row -> delete (confirm still guards it)
         requestDelete();
-        return o;
+        return 0;
       }
       if (o < -OPEN_PX / 2) {
         claimActive();
@@ -106,7 +132,25 @@ export function SwipeRow({
     });
   }
 
-  if (deleted) return null;
+  if (gone) return null;
+
+  if (pendingDelete) {
+    return (
+      <div className="flex min-h-14 items-center justify-between gap-3 rounded-xl bg-gravel px-4 text-sm text-white">
+        <span className="min-w-0 truncate">
+          Deleted <span className="font-bold">“{name}”</span>
+        </span>
+        <button
+          type="button"
+          onClick={undoDelete}
+          className="flex min-h-10 shrink-0 items-center gap-1 font-bold underline"
+        >
+          <Undo2 className="size-4" aria-hidden="true" />
+          Undo
+        </button>
+      </div>
+    );
+  }
 
   const width = rootRef.current?.clientWidth ?? 400;
   const pastFullSwipe = offset < -width * FULL_SWIPE_RATIO;
