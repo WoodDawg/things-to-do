@@ -21,7 +21,7 @@ cp .env.example .env.local
 |---|---|
 | `DATABASE_URL` | Neon pooled connection string |
 | `AUTH_SECRET` | `openssl rand -base64 48` |
-| `APP_PASSWORD_HASH` | `npm run hash-password -- 'your-password'` (quote it) |
+| `APP_PASSWORD_HASH` | `npm run hash-password -- 'your-password'` (quote it) — paste the pre-escaped line it prints; in `.env` files `$` must be written `\$` or Next's env expansion corrupts the hash |
 | `HOME_LAT` / `HOME_LNG` | Your home coordinates, decimal degrees |
 | `HOME_STATE` | Two-letter state the add form defaults to (e.g. `MD`) |
 | `GEOCODER_USER_AGENT` | e.g. `things-to-do-app/1.0 (contact: you@example.com)` |
