@@ -16,7 +16,8 @@ import {
 } from '@/lib/labels';
 import { appleMapsUrl, googleDirectionsUrl, googleMapsUrl } from '@/lib/map-links';
 import { isUuid } from '@/lib/uuid';
-import { deletePlace } from '@/app/(app)/places/actions';
+import { deletePlace, updateStatus } from '@/app/(app)/places/actions';
+import { StatusControl } from '@/components/StatusControl';
 
 const linkBtn =
   'flex min-h-11 items-center justify-center gap-2 rounded-lg border border-spruce px-3 text-sm font-bold text-spruce';
@@ -59,6 +60,13 @@ export default async function PlaceDetailPage({ params }: PageProps<'/places/[id
         {STATUS_LABELS[place.status]}
         {place.priority ? <span className="ml-2 rounded bg-blaze px-1.5 py-0.5 text-xs uppercase text-white">Priority</span> : null}
       </p>
+
+      <StatusControl
+        action={updateStatus.bind(null, place.id)}
+        status={place.status}
+        rating={place.rating}
+        lastVisitedAt={place.lastVisitedAt}
+      />
 
       <div className="grid grid-cols-2 gap-2">
         <a href={appleMapsUrl(place)} target="_blank" rel="noopener noreferrer" className={linkBtn}>

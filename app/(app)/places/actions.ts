@@ -9,6 +9,7 @@ import {
   placeDuration,
   placeSetting,
   places,
+  placeStatus,
   placeTags,
   placeType,
   tags,
@@ -195,6 +196,50 @@ export async function updatePlace(
   revalidatePath('/');
   revalidatePath(`/places/${id}`);
   redirect(`/places/${id}`);
+}
+
+export async function markAsBeen(id: string): Promise<void> {
+  await requireAuth();
+
+  const today = new Date().toISOString().slice(0, 10);
+  await getDb()
+    .update(places)
+    .set({ status: 'been', lastVisitedAt: today, updatedAt: new Date() })
+    .where(eq(places.id, id));
+
+  revalidatePath('/');
+  revalidatePath(`/places/${id}`);
+}
+
+const RATEABLE = ['been', 'favorite'] as const;
+
+export async function updateStatus(id: string, formData: FormData): Promise<void> {
+  await requireAuth();
+
+  const status = String(formData.get('status') ?? '');
+  if (!(placeStatus.enumValues as readonly string[]).includes(status)) return;
+  const s = status as (typeof placeStatus.enumValues)[number];
+
+  const ratingRaw = Number.parseInt(String(formData.get('rating') ?? ''), 10);
+  // Rating only exists for places actually visited (been/favorite).
+  const rating =
+    (RATEABLE as readonly string[]).includes(s) && ratingRaw >= 1 && ratingRaw <= 5
+      ? ratingRaw
+      : null;
+
+  const visitedRaw = String(formData.get('lastVisitedAt') ?? '').trim();
+  let lastVisitedAt = /^\d{4}-\d{2}-\d{2}$/.test(visitedRaw) ? visitedRaw : null;
+  if (!lastVisitedAt && (RATEABLE as readonly string[]).includes(s)) {
+    lastVisitedAt = new Date().toISOString().slice(0, 10);
+  }
+
+  await getDb()
+    .update(places)
+    .set({ status: s, rating, lastVisitedAt, updatedAt: new Date() })
+    .where(eq(places.id, id));
+
+  revalidatePath('/');
+  revalidatePath(`/places/${id}`);
 }
 
 export async function deletePlace(id: string): Promise<void> {
