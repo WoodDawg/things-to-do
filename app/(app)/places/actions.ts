@@ -270,6 +270,15 @@ export async function updateStatus(id: string, formData: FormData): Promise<void
   revalidatePath(`/places/${id}`);
 }
 
+/** Delete from the list without leaving the current (possibly filtered) view. */
+export async function deletePlaceInline(id: string): Promise<void> {
+  await requireAuth();
+
+  await getDb().delete(places).where(eq(places.id, id));
+
+  revalidatePath('/');
+}
+
 export async function deletePlace(id: string): Promise<void> {
   await requireAuth();
 

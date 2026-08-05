@@ -11,7 +11,8 @@ import { TypeIcon } from '@/components/TypeIcon';
 import { COST_LABELS, DURATION_LABELS, TYPE_LABELS } from '@/lib/labels';
 import { countActivePanelFilters, parseFilters } from '@/lib/filters';
 import { homeCoords, queryPlaces, tagsForPlaces } from '@/lib/queries';
-import { markAsBeen, undoMarkAsBeen } from '@/app/(app)/places/actions';
+import { deletePlaceInline, markAsBeen, undoMarkAsBeen } from '@/app/(app)/places/actions';
+import { SwipeRow } from '@/components/SwipeRow';
 
 export default async function ListPage({ searchParams }: PageProps<'/'>) {
   const sp = await searchParams;
@@ -77,7 +78,13 @@ export default async function ListPage({ searchParams }: PageProps<'/'>) {
           {rows.map((p) => {
             const placeTagNames = tagsByPlace.get(p.id) ?? [];
             return (
-              <li key={p.id} className="flex items-stretch gap-2">
+              <li key={p.id}>
+                <SwipeRow
+                  name={p.name}
+                  editHref={`/places/${p.id}/edit`}
+                  deleteAction={deletePlaceInline.bind(null, p.id)}
+                >
+                  <div className="flex items-stretch gap-2">
                 <Link
                   href={`/places/${p.id}`}
                   className="flex min-h-16 min-w-0 flex-1 items-center gap-3 rounded-xl border border-gravel/15 bg-card p-3"
@@ -132,6 +139,8 @@ export default async function ListPage({ searchParams }: PageProps<'/'>) {
                     undoAction={undoMarkAsBeen.bind(null, p.id, p.lastVisitedAt)}
                   />
                 ) : null}
+                  </div>
+                </SwipeRow>
               </li>
             );
           })}
