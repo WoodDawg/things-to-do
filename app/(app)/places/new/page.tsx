@@ -1,10 +1,20 @@
+import { isNotNull } from 'drizzle-orm';
 import { getDb } from '@/db';
-import { tags } from '@/db/schema';
+import { places, tags } from '@/db/schema';
 import { PlaceForm } from '@/components/PlaceForm';
 import { createPlace } from '@/app/(app)/places/actions';
 
 export default async function NewPlacePage() {
-  const allTags = await getDb().select({ name: tags.name }).from(tags).orderBy(tags.name);
+  const db = getDb();
+  const [allTags, names, localities] = await Promise.all([
+    db.select({ name: tags.name }).from(tags).orderBy(tags.name),
+    db.select({ name: places.name }).from(places),
+    db
+      .selectDistinct({ locality: places.locality })
+      .from(places)
+      .where(isNotNull(places.locality))
+      .orderBy(places.locality),
+  ]);
 
   return (
     <>
@@ -14,6 +24,8 @@ export default async function NewPlacePage() {
         submitLabel="Save place"
         defaultState={process.env.HOME_STATE ?? ''}
         existingTags={allTags.map((t) => t.name)}
+        existingNames={names.map((n) => n.name)}
+        localities={localities.map((l) => l.locality!).filter(Boolean)}
       />
     </>
   );

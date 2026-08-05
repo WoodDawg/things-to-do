@@ -13,9 +13,24 @@ export default function LoginPage() {
       <h1 className="font-display text-4xl font-bold uppercase tracking-wide text-spruce">
         Things to do
       </h1>
-      <p className="mt-1 text-mist">Private — password required.</p>
+      <p className="mt-1 text-mist">Private — sign in required.</p>
 
       <form action={formAction} className="mt-8 flex flex-col gap-3">
+        <label htmlFor="username" className="sr-only">
+          Username
+        </label>
+        <input
+          id="username"
+          name="username"
+          type="text"
+          autoComplete="username"
+          autoCapitalize="none"
+          autoCorrect="off"
+          autoFocus
+          required
+          className="h-12 rounded-lg border border-gravel/25 bg-card px-4 text-base"
+          placeholder="Username"
+        />
         <label htmlFor="password" className="sr-only">
           Password
         </label>
@@ -24,7 +39,6 @@ export default function LoginPage() {
           name="password"
           type="password"
           autoComplete="current-password"
-          autoFocus
           required
           className="h-12 rounded-lg border border-gravel/25 bg-card px-4 text-base"
           placeholder="Password"
@@ -39,7 +53,7 @@ export default function LoginPage() {
           disabled={pending}
           className="h-12 rounded-lg bg-spruce font-display text-lg font-semibold uppercase tracking-wide text-white disabled:opacity-60"
         >
-          {pending ? 'Checking…' : 'Unlock'}
+          {pending ? 'Checking…' : 'Sign in'}
         </button>
       </form>
     </main>

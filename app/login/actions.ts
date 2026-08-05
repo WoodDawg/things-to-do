@@ -3,7 +3,7 @@
 import bcrypt from 'bcryptjs';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { createSessionCookie } from '@/lib/auth';
+import { clearSessionCookie, createSessionCookie } from '@/lib/auth';
 import { rateLimit } from '@/lib/rate-limit';
 
 export type LoginState = { error: string | null };
@@ -16,21 +16,31 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
     return { error: 'Too many attempts. Wait a minute, then try again.' };
   }
 
+  const expectedUser = process.env.APP_USERNAME;
   const hash = process.env.APP_PASSWORD_HASH;
-  if (!hash) {
-    return { error: 'Server is missing APP_PASSWORD_HASH. Set it and redeploy.' };
+  if (!expectedUser || !hash) {
+    return { error: 'Server is missing APP_USERNAME or APP_PASSWORD_HASH. Set them and redeploy.' };
   }
 
+  const username = String(formData.get('username') ?? '').trim();
   const password = formData.get('password');
-  if (typeof password !== 'string' || password.length === 0) {
-    return { error: 'Enter the password.' };
+  if (!username || typeof password !== 'string' || password.length === 0) {
+    return { error: 'Enter the username and password.' };
   }
 
-  const ok = await bcrypt.compare(password, hash);
-  if (!ok) {
-    return { error: 'Wrong password. Check it and try again.' };
+  // Always run the bcrypt compare so a wrong username costs the same time as
+  // a wrong password (no username-probing oracle).
+  const userOk = username.toLowerCase() === expectedUser.toLowerCase();
+  const passOk = await bcrypt.compare(password, hash);
+  if (!userOk || !passOk) {
+    return { error: 'Wrong username or password. Check them and try again.' };
   }
 
   await createSessionCookie();
   redirect('/');
+}
+
+export async function logout(): Promise<void> {
+  await clearSessionCookie();
+  redirect('/login');
 }

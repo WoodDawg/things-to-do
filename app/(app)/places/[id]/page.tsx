@@ -15,6 +15,7 @@ import {
   TYPE_LABELS,
 } from '@/lib/labels';
 import { appleMapsUrl, googleDirectionsUrl, googleMapsUrl } from '@/lib/map-links';
+import { formatDate } from '@/lib/format';
 import { isUuid } from '@/lib/uuid';
 import { deletePlace, updateStatus } from '@/app/(app)/places/actions';
 import { StatusControl } from '@/components/StatusControl';
@@ -128,7 +129,7 @@ export default async function PlaceDetailPage({ params }: PageProps<'/places/[id
         {place.lastVisitedAt ? (
           <div>
             <dt className="text-mist">Last visited</dt>
-            <dd>{place.lastVisitedAt}</dd>
+            <dd>{formatDate(place.lastVisitedAt)}</dd>
           </div>
         ) : null}
       </dl>

@@ -10,7 +10,7 @@ import { TypeIcon } from '@/components/TypeIcon';
 import { COST_LABELS, DURATION_LABELS, TYPE_LABELS } from '@/lib/labels';
 import { countActivePanelFilters, parseFilters } from '@/lib/filters';
 import { homeCoords, queryPlaces, tagsForPlaces } from '@/lib/queries';
-import { markAsBeen } from '@/app/(app)/places/actions';
+import { markAsBeen, undoMarkAsBeen } from '@/app/(app)/places/actions';
 
 export default async function ListPage({ searchParams }: PageProps<'/'>) {
   const sp = await searchParams;
@@ -101,6 +101,7 @@ export default async function ListPage({ searchParams }: PageProps<'/'>) {
                       {p.distanceMiles != null ? ` · ${Math.round(p.distanceMiles)} mi away` : ''}
                       {p.cost ? ` · ${COST_LABELS[p.cost]}` : ''}
                       {p.duration ? ` · ${DURATION_LABELS[p.duration]}` : ''}
+                      {p.rating != null ? ` · ★${p.rating}` : ''}
                     </span>
                     {placeTagNames.length > 0 || p.reservationRequired ? (
                       <span className="mt-1 flex flex-wrap items-center gap-1">
@@ -123,7 +124,10 @@ export default async function ListPage({ searchParams }: PageProps<'/'>) {
                   <StatusBlaze status={p.status} />
                 </Link>
                 {p.status === 'want_to_go' ? (
-                  <MarkBeenButton action={markAsBeen.bind(null, p.id)} />
+                  <MarkBeenButton
+                    action={markAsBeen.bind(null, p.id)}
+                    undoAction={undoMarkAsBeen.bind(null, p.id, p.lastVisitedAt)}
+                  />
                 ) : null}
               </li>
             );

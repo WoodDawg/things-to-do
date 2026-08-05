@@ -24,8 +24,15 @@ type Props = {
   submitLabel: string;
   defaultState: string;
   existingTags: string[];
+  localities?: string[];
+  /** Existing place names (create form only) — powers the duplicate hint. */
+  existingNames?: string[];
   initial?: Initial;
 };
+
+function squash(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]/g, '');
+}
 
 function Segmented<T extends string>({
   name,
@@ -75,7 +82,15 @@ function Segmented<T extends string>({
   );
 }
 
-export function PlaceForm({ action, submitLabel, defaultState, existingTags, initial }: Props) {
+export function PlaceForm({
+  action,
+  submitLabel,
+  defaultState,
+  existingTags,
+  localities = [],
+  existingNames = [],
+  initial,
+}: Props) {
   const [state, formAction, pending] = useActionState(action, { error: null });
 
   const [name, setName] = useState(initial?.name ?? '');
@@ -93,6 +108,15 @@ export function PlaceForm({ action, submitLabel, defaultState, existingTags, ini
   const lastGeocoded = useRef(initial?.address ?? '');
 
   const ready = name.trim().length > 0 && type !== '' && usState !== '';
+
+  const squashed = squash(name);
+  const similarName =
+    squashed.length >= 3
+      ? existingNames.find((n) => {
+          const s = squash(n);
+          return s === squashed || s.includes(squashed) || squashed.includes(s);
+        })
+      : undefined;
 
   // Geocode once per distinct address, on blur, and never block the save (§6).
   async function geocodeAddress() {
@@ -140,6 +164,12 @@ export function PlaceForm({ action, submitLabel, defaultState, existingTags, ini
           className={inputCls}
           placeholder="Great Falls overlook"
         />
+        {similarName ? (
+          <p className="text-sm text-mist">
+            Heads up — you already have <span className="font-bold">“{similarName}”</span>. Saving
+            will still create a new place.
+          </p>
+        ) : null}
       </div>
 
       <fieldset className="flex flex-col gap-1.5">
@@ -247,10 +277,16 @@ export function PlaceForm({ action, submitLabel, defaultState, existingTags, ini
               id="locality"
               name="locality"
               type="text"
+              list="locality-options"
               defaultValue={initial?.locality ?? ''}
               className={inputCls}
               placeholder="Potomac"
             />
+            <datalist id="locality-options">
+              {localities.map((l) => (
+                <option key={l} value={l} />
+              ))}
+            </datalist>
           </div>
 
           <div className="flex flex-col gap-1.5">
@@ -340,6 +376,24 @@ export function PlaceForm({ action, submitLabel, defaultState, existingTags, ini
               type="url"
               inputMode="url"
               defaultValue={initial?.sourceUrl ?? ''}
+              className={inputCls}
+              placeholder="https://…"
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="mapUrlOverride" className={smallLabelCls}>
+              Custom map link{' '}
+              <span className="font-normal text-mist">
+                (for unmarked trailheads — replaces the Apple Maps button)
+              </span>
+            </label>
+            <input
+              id="mapUrlOverride"
+              name="mapUrlOverride"
+              type="url"
+              inputMode="url"
+              defaultValue={initial?.mapUrlOverride ?? ''}
               className={inputCls}
               placeholder="https://…"
             />

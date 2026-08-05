@@ -1,29 +1,47 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { Check } from 'lucide-react';
+import { Check, Undo2 } from 'lucide-react';
 
-export function MarkBeenButton({ action }: { action: () => Promise<void> }) {
+export function MarkBeenButton({
+  action,
+  undoAction,
+}: {
+  action: () => Promise<void>;
+  undoAction: () => Promise<void>;
+}) {
   const [done, setDone] = useState(false);
   const [, startTransition] = useTransition();
+
+  if (done) {
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          setDone(false);
+          startTransition(() => undoAction());
+        }}
+        className="flex min-h-11 shrink-0 items-center gap-1 rounded-lg border border-spruce bg-spruce px-2.5 text-sm font-bold text-white"
+        aria-label="Marked as been — undo"
+      >
+        <Undo2 className="size-4" aria-hidden="true" />
+        Undo
+      </button>
+    );
+  }
 
   return (
     <button
       type="button"
-      disabled={done}
       onClick={() => {
-        setDone(true); // optimistic — the row updates server-side right after
+        setDone(true); // optimistic; commit runs in the background
         startTransition(() => action());
       }}
-      className={`flex min-h-11 shrink-0 items-center gap-1 rounded-lg border px-2.5 text-sm font-bold ${
-        done
-          ? 'border-spruce bg-spruce text-white'
-          : 'border-gravel/25 bg-card text-spruce active:bg-limestone'
-      }`}
-      aria-label={done ? 'Marked as been' : 'Mark as been'}
+      className="flex min-h-11 shrink-0 items-center gap-1 rounded-lg border border-gravel/25 bg-card px-2.5 text-sm font-bold text-spruce active:bg-limestone"
+      aria-label="Mark as been"
     >
       <Check className="size-4" aria-hidden="true" />
-      {done ? 'Been!' : 'Been'}
+      Been
     </button>
   );
 }

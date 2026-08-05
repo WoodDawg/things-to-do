@@ -21,6 +21,7 @@ cp .env.example .env.local
 |---|---|
 | `DATABASE_URL` | Neon pooled connection string |
 | `AUTH_SECRET` | `openssl rand -base64 48` |
+| `APP_USERNAME` | Login username (case-insensitive) |
 | `APP_PASSWORD_HASH` | `npm run hash-password -- 'your-password'` (quote it) — paste the pre-escaped line it prints; in `.env` files `$` must be written `\$` or Next's env expansion corrupts the hash |
 | `HOME_LAT` / `HOME_LNG` | Your home coordinates, decimal degrees |
 | `HOME_STATE` | Two-letter state the add form defaults to (e.g. `MD`) |
@@ -48,6 +49,22 @@ npm run dev
 3. Add every variable from `.env.example` in Project → Settings → Environment Variables.
 4. Deploy. Run `npm run db:migrate` locally (it targets whatever `DATABASE_URL` is in
    `.env.local`) — the production database is the same Neon project.
+
+## Backups
+
+```sh
+npm run export                                     # -> backups/things-to-do-YYYY-MM-DD.json
+npx tsx scripts/import-data.ts backups/<file>.json # restore (skips places already present)
+```
+
+The data lives in one free-tier database — export it now and then.
+
+## Login hardening (optional)
+
+The in-memory login rate limit is per-serverless-instance, i.e. best-effort. For a hard
+backstop, add a Vercel WAF rule in the dashboard (Project → Firewall → Custom Rules):
+rate-limit requests where path equals `/login` and method is `POST` to something like
+10/minute per IP.
 
 ## Dev fixture data
 

@@ -8,7 +8,8 @@
     "start": "next start",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "hash-password": "tsx scripts/hash-password.ts"
+    "hash-password": "tsx scripts/hash-password.ts",
+    "export": "tsx scripts/export-data.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",

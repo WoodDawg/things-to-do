@@ -1,6 +1,6 @@
 'use server';
 
-import { eq, inArray } from 'drizzle-orm';
+import { and, eq, inArray, notExists, notInArray } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { getDb } from '@/db';
@@ -16,7 +16,7 @@ import {
 } from '@/db/schema';
 import { requireAuth } from '@/lib/auth';
 import { STATE_CODES } from '@/lib/states';
-import { normalizeTag } from '@/lib/tags';
+import { normalizeTag, STARTER_TAGS } from '@/lib/tags';
 
 export type PlaceFormState = { error: string | null };
 
@@ -103,6 +103,7 @@ function parseOptional(formData: FormData) {
       priority: formData.get('priority') === 'on',
       websiteUrl: urlOrNull(formData, 'websiteUrl'),
       sourceUrl: urlOrNull(formData, 'sourceUrl'),
+      mapUrlOverride: urlOrNull(formData, 'mapUrlOverride'),
       notes: str(formData, 'notes'),
     },
     tagNames,
@@ -124,6 +125,17 @@ async function syncTags(placeId: string, tagNames: string[]): Promise<void> {
   if (rows.length) {
     await db.insert(placeTags).values(rows.map((r) => ({ placeId, tagId: r.id })));
   }
+
+  // Auto-prune tags nothing uses anymore, except the starter vocabulary —
+  // this is the no-admin-screen way to keep autocomplete tidy.
+  await db
+    .delete(tags)
+    .where(
+      and(
+        notInArray(tags.name, [...STARTER_TAGS]),
+        notExists(db.select().from(placeTags).where(eq(placeTags.tagId, tags.id))),
+      ),
+    );
 }
 
 export async function createPlace(
@@ -207,7 +219,25 @@ export async function markAsBeen(id: string): Promise<void> {
     .set({ status: 'been', lastVisitedAt: today, updatedAt: new Date() })
     .where(eq(places.id, id));
 
-  revalidatePath('/');
+  // Deliberately NOT revalidating '/': the row stays visible with its Undo
+  // button instead of vanishing mid-glance. The list is dynamically rendered,
+  // so the next navigation is fresh anyway.
+  revalidatePath(`/places/${id}`);
+}
+
+export async function undoMarkAsBeen(id: string, priorLastVisitedAt: string | null): Promise<void> {
+  await requireAuth();
+
+  await getDb()
+    .update(places)
+    .set({
+      status: 'want_to_go',
+      lastVisitedAt: priorLastVisitedAt,
+      rating: null,
+      updatedAt: new Date(),
+    })
+    .where(eq(places.id, id));
+
   revalidatePath(`/places/${id}`);
 }
 
