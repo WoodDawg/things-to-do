@@ -219,10 +219,10 @@ export async function markAsBeen(id: string): Promise<void> {
     .set({ status: 'been', lastVisitedAt: today, updatedAt: new Date() })
     .where(eq(places.id, id));
 
-  // Deliberately NOT revalidating '/': the row stays visible with its Undo
-  // button instead of vanishing mid-glance. The list is dynamically rendered,
-  // so the next navigation is fresh anyway.
-  revalidatePath(`/places/${id}`);
+  // Deliberately no revalidatePath at all: ANY revalidate call from a server
+  // action refreshes the current route, which would refetch the list and
+  // vanish the row (and its Undo button) mid-glance. Every page here is
+  // dynamically rendered, so the next navigation is fresh regardless.
 }
 
 export async function undoMarkAsBeen(id: string, priorLastVisitedAt: string | null): Promise<void> {
@@ -237,8 +237,6 @@ export async function undoMarkAsBeen(id: string, priorLastVisitedAt: string | nu
       updatedAt: new Date(),
     })
     .where(eq(places.id, id));
-
-  revalidatePath(`/places/${id}`);
 }
 
 const RATEABLE = ['been', 'favorite'] as const;

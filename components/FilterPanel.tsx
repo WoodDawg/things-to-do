@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
-import { SlidersHorizontal, X } from 'lucide-react';
+import { LocateFixed, SlidersHorizontal, X } from 'lucide-react';
 import type { Filters } from '@/lib/filters';
 import {
   COST_LABELS,
@@ -32,6 +32,59 @@ export function FilterPanel({
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const [maxdist, setMaxdist] = useState(filters.maxdist ?? 300);
+
+  const [from, setFrom] = useState(filters.from);
+  const [fromLabel, setFromLabel] = useState(filters.fromLabel ?? '');
+  const [locSearch, setLocSearch] = useState('');
+  const [locBusy, setLocBusy] = useState(false);
+  const [locError, setLocError] = useState<string | null>(null);
+
+  async function findLocation() {
+    const q = locSearch.trim();
+    if (q.length < 2) return;
+    setLocBusy(true);
+    setLocError(null);
+    try {
+      const res = await fetch('/api/geocode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ address: q }),
+      });
+      const data = res.ok ? await res.json() : { result: null };
+      if (data.result) {
+        setFrom({ lat: data.result.latitude, lng: data.result.longitude });
+        setFromLabel(q);
+        setLocSearch('');
+      } else {
+        setLocError("Couldn't find that place — try adding a state, e.g. “Ocean City, MD”.");
+      }
+    } catch {
+      setLocError("Couldn't find that place — check your connection and try again.");
+    } finally {
+      setLocBusy(false);
+    }
+  }
+
+  function useMyLocation() {
+    setLocError(null);
+    if (!navigator.geolocation) {
+      setLocError('This browser has no location access.');
+      return;
+    }
+    setLocBusy(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setFrom({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setFromLabel('my location');
+        setLocBusy(false);
+      },
+      () => {
+        setLocError('Location unavailable — check the browser permission.');
+        setLocBusy(false);
+      },
+      { timeout: 10_000 },
+    );
+  }
 
   useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : '';
@@ -273,7 +326,68 @@ export function FilterPanel({
                 </div>
               </fieldset>
 
-              {hasHome ? (
+              <div className="flex flex-col gap-1.5">
+                <p className={label}>
+                  Distances from:{' '}
+                  <span className="font-normal text-mist">
+                    {from ? (fromLabel || 'custom point') : 'home'}
+                  </span>
+                </p>
+                {from ? (
+                  <input type="hidden" name="from" value={`${from.lat.toFixed(5)},${from.lng.toFixed(5)}`} />
+                ) : null}
+                {from && fromLabel ? <input type="hidden" name="fromlabel" value={fromLabel} /> : null}
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={useMyLocation}
+                    disabled={locBusy}
+                    className="flex min-h-11 items-center gap-1.5 rounded-lg border border-gravel/25 bg-card px-3 text-sm font-bold disabled:opacity-50"
+                  >
+                    <LocateFixed className="size-4" aria-hidden="true" />
+                    My location
+                  </button>
+                  {from ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFrom(null);
+                        setFromLabel('');
+                      }}
+                      className="flex min-h-11 items-center rounded-lg border border-gravel/25 bg-card px-3 text-sm text-mist"
+                    >
+                      Reset to home
+                    </button>
+                  ) : null}
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={locSearch}
+                    onChange={(e) => setLocSearch(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        findLocation();
+                      }
+                    }}
+                    placeholder="Or a town / address…"
+                    aria-label="Measure distances from this place"
+                    className="h-11 min-w-0 flex-1 rounded-lg border border-gravel/25 bg-card px-3 text-base"
+                  />
+                  <button
+                    type="button"
+                    onClick={findLocation}
+                    disabled={locBusy || locSearch.trim().length < 2}
+                    className="min-h-11 rounded-lg border border-spruce px-3 text-sm font-bold text-spruce disabled:opacity-50"
+                  >
+                    {locBusy ? '…' : 'Find'}
+                  </button>
+                </div>
+                {locError ? <p className="text-sm text-blaze">{locError}</p> : null}
+              </div>
+
+              {hasHome || from ? (
                 <div className="flex flex-col gap-1.5">
                   <label htmlFor="f-maxdist" className={label}>
                     Max distance:{' '}

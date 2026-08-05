@@ -30,14 +30,14 @@ async function throttled<T>(fn: () => Promise<T>): Promise<T> {
   return run;
 }
 
-export async function geocode(address: string, state: string): Promise<GeocodeResult | null> {
+export async function geocode(address: string, state?: string): Promise<GeocodeResult | null> {
   const userAgent = process.env.GEOCODER_USER_AGENT;
   if (!userAgent) {
     console.warn('GEOCODER_USER_AGENT is not set — refusing to call Nominatim without it');
     return null;
   }
 
-  const q = `${address}, ${state}`;
+  const q = state ? `${address}, ${state}` : address;
   const url = new URL('https://nominatim.openstreetmap.org/search');
   url.searchParams.set('q', q);
   url.searchParams.set('format', 'jsonv2');

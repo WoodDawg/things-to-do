@@ -29,6 +29,9 @@ export type Filters = {
   maxdist: number | null;
   q: string | null;
   sort: SortKey;
+  /** Distance-origin override — when set, distances are measured from here, not home. */
+  from: { lat: number; lng: number } | null;
+  fromLabel: string | null;
 };
 
 export type RawSearchParams = Record<string, string | string[] | undefined>;
@@ -56,6 +59,17 @@ export function parseFilters(sp: RawSearchParams): Filters {
   const sortRaw = one(sp.sort);
   const maxdistRaw = Number.parseInt(one(sp.maxdist) ?? '', 10);
 
+  let from: Filters['from'] = null;
+  const fromRaw = one(sp.from);
+  if (fromRaw) {
+    const [latS, lngS] = fromRaw.split(',');
+    const lat = Number.parseFloat(latS);
+    const lng = Number.parseFloat(lngS);
+    if (Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180) {
+      from = { lat, lng };
+    }
+  }
+
   return {
     close: one(sp.close) === '1',
     rainy: one(sp.rainy) === '1',
@@ -80,6 +94,8 @@ export function parseFilters(sp: RawSearchParams): Filters {
     sort: (['dist', 'new', 'old', 'rating', 'name'] as const).includes(sortRaw as SortKey)
       ? (sortRaw as SortKey)
       : 'dist',
+    from,
+    fromLabel: from ? one(sp.fromlabel)?.trim().slice(0, 60) || null : null,
   };
 }
 
@@ -104,6 +120,10 @@ export function toSearchParams(f: Filters): URLSearchParams {
   if (f.maxdist != null) sp.set('maxdist', String(f.maxdist));
   if (f.q) sp.set('q', f.q);
   if (f.sort !== 'dist') sp.set('sort', f.sort);
+  if (f.from) {
+    sp.set('from', `${f.from.lat.toFixed(5)},${f.from.lng.toFixed(5)}`);
+    if (f.fromLabel) sp.set('fromlabel', f.fromLabel);
+  }
   return sp;
 }
 
@@ -120,5 +140,6 @@ export function countActivePanelFilters(f: Filters): number {
   if (f.res) n++;
   if (f.maxdist != null) n++;
   if (f.q) n++;
+  if (f.from) n++;
   return n;
 }

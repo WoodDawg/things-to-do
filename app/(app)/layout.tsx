@@ -1,7 +1,7 @@
-import Link from 'next/link';
 import { LogOut } from 'lucide-react';
 import { requireAuth } from '@/lib/auth';
 import { BottomNav } from '@/components/BottomNav';
+import { ListLink } from '@/components/ListMemory';
 import { logout } from '@/app/login/actions';
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -10,12 +10,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-xl flex-col">
       <header className="sticky top-0 z-10 flex items-center justify-between border-b border-gravel/10 bg-limestone/95 px-4 py-3 backdrop-blur">
-        <Link
-          href="/"
-          className="font-display text-2xl font-bold uppercase tracking-wide text-spruce"
-        >
+        <ListLink className="font-display text-2xl font-bold uppercase tracking-wide text-spruce">
           Things to do
-        </Link>
+        </ListLink>
         <form action={logout}>
           <button
             type="submit"

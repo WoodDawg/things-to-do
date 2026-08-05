@@ -20,8 +20,9 @@ export async function POST(request: Request) {
   }
 
   const address = typeof body.address === 'string' ? body.address.trim() : '';
-  const state = typeof body.state === 'string' ? body.state.trim().toUpperCase() : '';
-  if (address.length < 4 || !STATE_CODES.has(state)) {
+  const stateRaw = typeof body.state === 'string' ? body.state.trim().toUpperCase() : '';
+  const state = STATE_CODES.has(stateRaw) ? stateRaw : undefined;
+  if (address.length < 2) {
     return NextResponse.json({ result: null });
   }
 

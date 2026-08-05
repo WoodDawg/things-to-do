@@ -18,6 +18,7 @@ import { appleMapsUrl, googleDirectionsUrl, googleMapsUrl } from '@/lib/map-link
 import { formatDate } from '@/lib/format';
 import { isUuid } from '@/lib/uuid';
 import { deletePlace, updateStatus } from '@/app/(app)/places/actions';
+import { BackButton } from '@/components/ListMemory';
 import { StatusControl } from '@/components/StatusControl';
 
 const linkBtn =
@@ -42,6 +43,7 @@ export default async function PlaceDetailPage({ params }: PageProps<'/places/[id
   return (
     <article className="flex flex-col gap-5">
       <header className="flex items-start gap-3">
+        <BackButton />
         <span className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-card text-spruce">
           <TypeIcon type={place.type} className="size-6" />
         </span>

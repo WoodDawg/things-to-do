@@ -13,7 +13,7 @@ export const metadata = { title: 'Map — Things To Do' };
 export default async function MapPage({ searchParams }: PageProps<'/map'>) {
   const sp = await searchParams;
   const f = parseFilters(sp);
-  const home = homeCoords();
+  const origin = f.from ?? homeCoords();
 
   const [rows, allTags] = await Promise.all([
     queryPlaces(f),
@@ -31,7 +31,7 @@ export default async function MapPage({ searchParams }: PageProps<'/map'>) {
       <FilterBar
         filters={f}
         allTags={allTags.map((t) => t.name)}
-        hasHome={home !== null}
+        hasHome={origin !== null}
         basePath="/map"
       />
 
@@ -39,6 +39,7 @@ export default async function MapPage({ searchParams }: PageProps<'/map'>) {
         <p>
           {mappable.length} on map
           {unmapped > 0 ? ` · ${unmapped} without a location` : ''}
+          {f.from ? ` · from ${f.fromLabel ?? 'custom point'}` : ''}
         </p>
         <span className="flex items-center gap-2" aria-hidden="true">
           {(['want_to_go', 'been', 'favorite'] as const).map((s) => (
@@ -73,7 +74,7 @@ export default async function MapPage({ searchParams }: PageProps<'/map'>) {
               latitude: p.latitude,
               longitude: p.longitude,
             }))}
-            home={home ? { lat: home.lat, lng: home.lng } : null}
+            home={origin ? { lat: origin.lat, lng: origin.lng } : null}
           />
         </div>
       )}

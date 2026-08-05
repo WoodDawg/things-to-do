@@ -3,6 +3,7 @@ import { CalendarCheck, Star } from 'lucide-react';
 import { getDb } from '@/db';
 import { tags } from '@/db/schema';
 import { FilterBar } from '@/components/FilterBar';
+import { RememberListView } from '@/components/ListMemory';
 import { MarkBeenButton } from '@/components/MarkBeenButton';
 import { SortSelect } from '@/components/SortSelect';
 import { StatusBlaze } from '@/components/StatusBlaze';
@@ -15,7 +16,7 @@ import { markAsBeen, undoMarkAsBeen } from '@/app/(app)/places/actions';
 export default async function ListPage({ searchParams }: PageProps<'/'>) {
   const sp = await searchParams;
   const f = parseFilters(sp);
-  const home = homeCoords();
+  const origin = f.from ?? homeCoords();
 
   const [rows, allTags] = await Promise.all([
     queryPlaces(f),
@@ -29,18 +30,20 @@ export default async function ListPage({ searchParams }: PageProps<'/'>) {
 
   return (
     <div className="flex flex-col gap-3">
+      <RememberListView />
       <FilterBar
         filters={f}
         allTags={allTags.map((t) => t.name)}
-        hasHome={home !== null}
+        hasHome={origin !== null}
         basePath="/"
       />
 
       <div className="flex items-center justify-between">
         <p className="text-sm text-mist">
           {rows.length} place{rows.length === 1 ? '' : 's'}
+          {f.from ? ` · distances from ${f.fromLabel ?? 'custom point'}` : ''}
         </p>
-        <SortSelect current={f.sort} hasHome={home !== null} />
+        <SortSelect current={f.sort} hasHome={origin !== null} />
       </div>
 
       {rows.length === 0 ? (

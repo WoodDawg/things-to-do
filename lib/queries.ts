@@ -26,7 +26,7 @@ function distanceSql(home: { lat: number; lng: number }): SQL<number | null> {
 
 export async function queryPlaces(f: Filters): Promise<PlaceWithDistance[]> {
   const db = getDb();
-  const home = homeCoords();
+  const home = f.from ?? homeCoords(); // override wins over HOME_LAT/LNG
   const distance = home ? distanceSql(home) : sql<number | null>`NULL`;
 
   const conds: SQL[] = [];
