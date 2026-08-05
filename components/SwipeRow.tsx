@@ -47,7 +47,7 @@ export function SwipeRow({
     }
     if (!s.horizontal) return;
     moved.current = true;
-    setOffset(Math.max(0, Math.min(OPEN_PX, s.base + dx)));
+    setOffset(Math.min(0, Math.max(-OPEN_PX, s.base + dx)));
   }
 
   function onPointerEnd() {
@@ -55,18 +55,18 @@ export function SwipeRow({
     drag.current = null;
     setDragging(false);
     if (!s || s.horizontal !== true) return;
-    setOffset((o) => (o > OPEN_PX / 2 ? OPEN_PX : 0));
+    setOffset((o) => (o < -OPEN_PX / 2 ? -OPEN_PX : 0));
   }
 
   if (deleted) return null;
 
   return (
     <div className="relative overflow-hidden rounded-xl">
-      <div className="absolute inset-y-0 left-0 flex w-32" aria-hidden={offset === 0}>
+      <div className="absolute inset-y-0 right-0 flex w-32" aria-hidden={offset === 0}>
         <Link
           href={editHref}
           tabIndex={offset === 0 ? -1 : 0}
-          className="flex flex-1 flex-col items-center justify-center gap-1 rounded-l-xl bg-spruce text-xs font-bold text-white"
+          className="flex flex-1 flex-col items-center justify-center gap-1 bg-spruce text-xs font-bold text-white"
         >
           <Pencil className="size-4" aria-hidden="true" />
           Edit
@@ -82,7 +82,7 @@ export function SwipeRow({
               setOffset(0);
             }
           }}
-          className="flex flex-1 flex-col items-center justify-center gap-1 bg-blaze text-xs font-bold text-white"
+          className="flex flex-1 flex-col items-center justify-center gap-1 rounded-r-xl bg-blaze text-xs font-bold text-white"
         >
           <Trash2 className="size-4" aria-hidden="true" />
           Delete
