@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { eq } from 'drizzle-orm';
 import { Compass, ExternalLink, MapPin, Navigation } from 'lucide-react';
 import { getDb } from '@/db';
-import { places } from '@/db/schema';
+import { places, placeTags, tags } from '@/db/schema';
 import { DeleteButton } from '@/components/DeleteButton';
 import { StatusBlaze } from '@/components/StatusBlaze';
 import { TypeIcon } from '@/components/TypeIcon';
@@ -25,8 +25,15 @@ export default async function PlaceDetailPage({ params }: PageProps<'/places/[id
   const { id } = await params;
   if (!isUuid(id)) notFound();
 
-  const [place] = await getDb().select().from(places).where(eq(places.id, id)).limit(1);
+  const db = getDb();
+  const [place] = await db.select().from(places).where(eq(places.id, id)).limit(1);
   if (!place) notFound();
+
+  const ownTags = await db
+    .select({ name: tags.name })
+    .from(placeTags)
+    .innerJoin(tags, eq(placeTags.tagId, tags.id))
+    .where(eq(placeTags.placeId, id));
 
   const directions = googleDirectionsUrl(place);
 
@@ -117,6 +124,19 @@ export default async function PlaceDetailPage({ params }: PageProps<'/places/[id
           </div>
         ) : null}
       </dl>
+
+      {ownTags.length > 0 ? (
+        <ul className="flex flex-wrap gap-1.5">
+          {ownTags.map((t) => (
+            <li
+              key={t.name}
+              className="rounded-full border border-gravel/20 bg-card px-3 py-1 text-sm text-mist"
+            >
+              {t.name}
+            </li>
+          ))}
+        </ul>
+      ) : null}
 
       {place.notes ? (
         <section>

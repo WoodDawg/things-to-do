@@ -1,0 +1,2 @@
+-- Intentionally empty: applied as a stub before content was added.
+-- The starter-tag inserts live in 0002_starter_tags_data.sql.

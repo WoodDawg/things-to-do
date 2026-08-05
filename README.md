@@ -49,11 +49,23 @@ npm run dev
 4. Deploy. Run `npm run db:migrate` locally (it targets whatever `DATABASE_URL` is in
    `.env.local`) — the production database is the same Neon project.
 
-## Dev fixture data (Phase 2)
+## Dev fixture data
 
-`scripts/seed-dev.ts` / `scripts/reset-dev.ts` — invented `[DEV]`-prefixed places for testing
-filters and distance sorting. Run with `npx tsx`. Coming in Phase 2; no imports, no
-batch geocoding, ever.
+```sh
+npx tsx scripts/seed-dev.ts    # 15 invented [DEV]-prefixed places; idempotent
+npx tsx scripts/reset-dev.ts   # removes every [DEV] row
+```
+
+Coordinates are hardcoded offsets from `HOME_LAT`/`HOME_LNG` — the scripts never geocode.
+Run `reset-dev` before putting real data in.
+
+## Decisions made outside the spec
+
+- `favorite` is an independent status, **not** a superset of `been` — been/total ratios and
+  "been" filters count only `status = 'been'`. Rating stays enabled for `been` and `favorite`.
+- `HOME_STATE` env var added (the form's default state had to come from somewhere).
+- In-memory rate limiting and the geocoder's 1.1s gap are per-serverless-instance
+  (best-effort) — acceptable for a single-user app.
 
 ## Parked for later (deliberately not in v1)
 

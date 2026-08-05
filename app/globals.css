@@ -19,6 +19,17 @@ body {
   font-family: var(--font-body);
 }
 
+/* Draggable map pin (MapPreview) — matches the trail-blaze design language */
+.ttd-pin {
+  width: 24px;
+  height: 24px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  background: var(--color-spruce);
+  border: 2px solid white;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.4);
+}
+
 :focus-visible {
   outline: 2px solid var(--color-spruce);
   outline-offset: 2px;
