@@ -21,11 +21,13 @@ export function FilterPanel({
   activeCount,
   allTags,
   hasHome,
+  basePath = '/',
 }: {
   filters: Filters;
   activeCount: number;
   allTags: string[];
   hasHome: boolean;
+  basePath?: string;
 }) {
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -74,7 +76,7 @@ export function FilterPanel({
             </div>
 
             {/* Native GET form -> everything lands in searchParams, shareable and refresh-proof */}
-            <form method="get" action="/" className="flex flex-col gap-5 p-4">
+            <form method="get" action={basePath} className="flex flex-col gap-5 p-4">
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="f-q" className={label}>
                   Search
@@ -105,6 +107,7 @@ export function FilterPanel({
                         {l}
                       </option>
                     ))}
+                    <option value="visited">Been or favorite</option>
                     <option value="all">Everything</option>
                   </select>
                 </div>
@@ -301,7 +304,7 @@ export function FilterPanel({
 
               <div className="sticky bottom-0 -mx-4 flex gap-2 border-t border-gravel/10 bg-limestone p-4">
                 <Link
-                  href="/"
+                  href={basePath}
                   onClick={() => setOpen(false)}
                   className="flex h-12 flex-1 items-center justify-center rounded-lg border border-gravel/25 bg-card font-display text-lg font-semibold uppercase tracking-wide"
                 >

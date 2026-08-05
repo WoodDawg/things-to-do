@@ -31,7 +31,8 @@ export async function queryPlaces(f: Filters): Promise<PlaceWithDistance[]> {
 
   const conds: SQL[] = [];
 
-  if (f.status !== 'all') conds.push(eq(places.status, f.status));
+  if (f.status === 'visited') conds.push(inArray(places.status, ['been', 'favorite']));
+  else if (f.status !== 'all') conds.push(eq(places.status, f.status));
   if (f.rainy) conds.push(inArray(places.setting, ['indoor', 'either']));
   if (f.free) conds.push(eq(places.cost, 'free'));
   if (f.quick) conds.push(inArray(places.duration, ['quick', 'half_day']));

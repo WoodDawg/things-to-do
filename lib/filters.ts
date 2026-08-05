@@ -16,8 +16,8 @@ export type Filters = {
   quick: boolean;
   nores: boolean;
   priority: boolean;
-  // panel
-  status: (typeof placeStatus.enumValues)[number] | 'all';
+  // panel — 'visited' = been OR favorite (the quick "Been" tab)
+  status: (typeof placeStatus.enumValues)[number] | 'visited' | 'all';
   state: string | null;
   locality: string | null;
   types: (typeof placeType.enumValues)[number][];
@@ -64,7 +64,9 @@ export function parseFilters(sp: RawSearchParams): Filters {
     nores: one(sp.nores) === '1',
     priority: one(sp.priority) === '1',
     status:
-      statusRaw === 'all' ? 'all' : (inEnum(placeStatus.enumValues, statusRaw) ?? 'want_to_go'),
+      statusRaw === 'all' || statusRaw === 'visited'
+        ? statusRaw
+        : (inEnum(placeStatus.enumValues, statusRaw) ?? 'want_to_go'),
     state: one(sp.state)?.toUpperCase() || null,
     locality: one(sp.locality)?.trim() || null,
     types: manyInEnum(placeType.enumValues, all(sp.type)),
@@ -107,7 +109,7 @@ export function toSearchParams(f: Filters): URLSearchParams {
 
 export function countActivePanelFilters(f: Filters): number {
   let n = 0;
-  if (f.status !== 'want_to_go') n++;
+  // status is surfaced by the To go / Been / Everything tabs, not the panel badge
   if (f.state) n++;
   if (f.locality) n++;
   n += f.types.length ? 1 : 0;

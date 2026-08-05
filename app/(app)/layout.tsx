@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { List, Map as MapIcon, Plus } from 'lucide-react';
+import { FolderTree, List, Map as MapIcon, Plus } from 'lucide-react';
 import { requireAuth } from '@/lib/auth';
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -42,8 +42,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             href="/browse"
             className="flex h-12 flex-1 flex-col items-center justify-center rounded-lg text-xs font-bold text-gravel active:bg-limestone"
           >
-            <MapIcon className="size-5" aria-hidden="true" />
+            <FolderTree className="size-5" aria-hidden="true" />
             Browse
+          </Link>
+          <Link
+            href="/map"
+            className="flex h-12 flex-1 flex-col items-center justify-center rounded-lg text-xs font-bold text-gravel active:bg-limestone"
+          >
+            <MapIcon className="size-5" aria-hidden="true" />
+            Map
           </Link>
         </div>
       </div>

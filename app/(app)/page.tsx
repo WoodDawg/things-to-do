@@ -2,37 +2,15 @@ import Link from 'next/link';
 import { CalendarCheck, Star } from 'lucide-react';
 import { getDb } from '@/db';
 import { tags } from '@/db/schema';
-import { FilterPanel } from '@/components/FilterPanel';
+import { FilterBar } from '@/components/FilterBar';
 import { MarkBeenButton } from '@/components/MarkBeenButton';
 import { SortSelect } from '@/components/SortSelect';
 import { StatusBlaze } from '@/components/StatusBlaze';
 import { TypeIcon } from '@/components/TypeIcon';
 import { COST_LABELS, DURATION_LABELS, TYPE_LABELS } from '@/lib/labels';
-import {
-  countActivePanelFilters,
-  parseFilters,
-  toSearchParams,
-  type Filters,
-} from '@/lib/filters';
+import { countActivePanelFilters, parseFilters } from '@/lib/filters';
 import { homeCoords, queryPlaces, tagsForPlaces } from '@/lib/queries';
 import { markAsBeen } from '@/app/(app)/places/actions';
-
-const CHIPS: { key: keyof Filters & string; label: string }[] = [
-  { key: 'close', label: 'Close by' },
-  { key: 'rainy', label: 'Rainy day' },
-  { key: 'free', label: 'Free' },
-  { key: 'quick', label: 'Quick trip' },
-  { key: 'nores', label: 'No booking' },
-  { key: 'priority', label: 'Priority' },
-];
-
-function chipHref(f: Filters, key: string): string {
-  const sp = toSearchParams(f);
-  if (sp.has(key)) sp.delete(key);
-  else sp.set(key, '1');
-  const s = sp.toString();
-  return s ? `/?${s}` : '/';
-}
 
 export default async function ListPage({ searchParams }: PageProps<'/'>) {
   const sp = await searchParams;
@@ -47,34 +25,16 @@ export default async function ListPage({ searchParams }: PageProps<'/'>) {
 
   const activeCount = countActivePanelFilters(f);
   const anyChip = f.close || f.rainy || f.free || f.quick || f.nores || f.priority;
-  const anyFilter = activeCount > 0 || anyChip;
+  const anyFilter = activeCount > 0 || anyChip || f.status !== 'want_to_go';
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="scrollbar-none -mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
-        <FilterPanel
-          filters={f}
-          activeCount={activeCount}
-          allTags={allTags.map((t) => t.name)}
-          hasHome={home !== null}
-        />
-        {CHIPS.filter((c) => c.key !== 'close' || home !== null).map((c) => {
-          const on = Boolean(f[c.key]);
-          return (
-            <Link
-              key={c.key}
-              href={chipHref(f, c.key)}
-              replace
-              scroll={false}
-              className={`flex min-h-9 shrink-0 items-center rounded-full border px-3 text-sm font-bold ${
-                on ? 'border-spruce bg-spruce text-white' : 'border-gravel/25 bg-card text-gravel'
-              }`}
-            >
-              {c.label}
-            </Link>
-          );
-        })}
-      </div>
+      <FilterBar
+        filters={f}
+        allTags={allTags.map((t) => t.name)}
+        hasHome={home !== null}
+        basePath="/"
+      />
 
       <div className="flex items-center justify-between">
         <p className="text-sm text-mist">
